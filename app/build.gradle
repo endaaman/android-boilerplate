@@ -162,3 +162,47 @@ dependencies {
 tasks.matching {it instanceof Test}.all {
     testLogging.events = ["failed", "passed", "skipped"]
 }
+
+task classPath(type: Jar) {
+  doLast {
+    def cp = [android.getBootClasspath()[0], it.archivePath]
+    def sp = []
+    android.applicationVariants.all { v ->
+      cp += v.getApkLibraries()
+      new File("${project.buildDir}/generated/source")
+        .traverse([maxDepth: 0, type: groovy.io.FileType.DIRECTORIES]) {
+          sp += "${it.getPath()}/${v.getName()}"
+        }
+    }
+    cp += project.configurations.provided
+      .flatten()
+      .unique()
+      .findAll { it.exists() }
+    cp.each { println it }
+
+    def cstr = cp.unique().join(":")
+    def file = new File("$projectDir/../cp.sh")
+    file.createNewFile()
+    file.text = "export CLASSPATH='${cstr}'"
+
+    def sstr = sp.unique().join(":")
+    def sfile = new File("$projectDir/../sp")
+    sfile.createNewFile()
+    sfile.text = sstr
+  }
+}
+
+task hi(type: Jar) {
+    // println project.getExtensions().findByName('android')
+    // return
+    // def (a, b) = [1, 2]
+    // println a
+    // def a = project.getExtensions().findByName('android').getProperties()
+    // println a
+    // project.getPlugins().has
+    // project.configurations.flatten()
+    // println android ? 'hi' : 'not'
+    // project.getPlugins().forEach { println it }
+    // println project.getPlugins().hasPlugin('android')
+    // project.allprojects.forEach { println it.getRootDir().getPath() }
+}
